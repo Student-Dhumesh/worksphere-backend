@@ -13,7 +13,7 @@ public class AuthResponse {
     private UserInfo user;
 
     @Getter
-    @Setter
+    @Builder
     public static class UserInfo {
         private Long id;
         private String name;
