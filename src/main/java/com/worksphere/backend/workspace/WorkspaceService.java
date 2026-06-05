@@ -71,7 +71,7 @@ public class WorkspaceService {
         return mapToResponse(workspace);
     }
 
-//    Get all workspace
+//    Get all workspaces
     public List<WorkspaceResponse> getMyWorkspaces() {
         User owner = getCurrentUser();
 
