@@ -1,11 +1,14 @@
 package com.worksphere.backend.project;
 
+import com.worksphere.backend.auth.User;
+import com.worksphere.backend.auth.UserRepository;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.project.dto.ProjectRequest;
 import com.worksphere.backend.project.dto.ProjectResponse;
 import com.worksphere.backend.workspace.Workspace;
 import com.worksphere.backend.workspace.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +19,20 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final WorkspaceRepository workspaceRepository;
+    private final UserRepository userRepository;
+
+//    Helper Function - Get current logged in user
+    private User getCurrentUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(("User not found"))
+                );
+    }
 
 //    Helper Function - Map to response
     private ProjectResponse mapToResponse(Project project) {
@@ -82,6 +99,17 @@ public class ProjectService {
                         new ResourceNotFoundException("Project not found")
                 );
 
+        User currentUser = getCurrentUser();
+
+        if (!project
+                .getWorkspace()
+                .getOwner()
+                .getId()
+                .equals(currentUser.getId())
+        ) {
+            throw new RuntimeException("Only the workspace owner can update projects");
+        }
+
         project.setName(request.getName());
         project.setDescription(request.getDescription());
 
@@ -96,6 +124,17 @@ public class ProjectService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Project not found")
                 );
+
+        User currentUser = getCurrentUser();
+
+        if (!project
+                .getWorkspace()
+                .getOwner()
+                .getId()
+                .equals(currentUser.getId())
+        ) {
+            throw new RuntimeException("Only the workspace owner can delete projects");
+        }
 
         projectRepository.delete(project);
     }

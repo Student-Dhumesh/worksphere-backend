@@ -4,6 +4,7 @@ import com.worksphere.backend.auth.User;
 import com.worksphere.backend.auth.UserRepository;
 import com.worksphere.backend.comment.dto.CommentRequest;
 import com.worksphere.backend.comment.dto.CommentResponse;
+import com.worksphere.backend.comment.dto.CommentUpdateRequest;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.task.Task;
 import com.worksphere.backend.task.TaskRepository;
@@ -83,6 +84,27 @@ public class CommentService {
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+    }
+
+//    Update comment
+    public CommentResponse updateComment(Long commentId, CommentUpdateRequest request) {
+
+        Comment comment = commentRepository
+                .findById(commentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Comment not found")
+                );
+
+        User currentUser = getCurrentUser();
+
+        if (!comment.getAuthor().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("You can only update your own comments");
+        }
+
+        comment.setContent(request.getContent());
+        commentRepository.save(comment);
+
+        return mapToResponse(comment);
     }
 
 //    Delete comment

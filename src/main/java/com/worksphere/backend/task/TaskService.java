@@ -1,5 +1,7 @@
 package com.worksphere.backend.task;
 
+import com.worksphere.backend.auth.User;
+import com.worksphere.backend.auth.UserRepository;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.project.Project;
 import com.worksphere.backend.project.ProjectRepository;
@@ -8,6 +10,7 @@ import com.worksphere.backend.task.dto.TaskResponse;
 import com.worksphere.backend.task.dto.TaskStatusUpdateRequest;
 import com.worksphere.backend.task.dto.TaskUpdateRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +22,20 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
+
+//    Helper Function - Get current logged in user
+    private User getCurrentUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
+    }
 
 //    Helper Function - Map to response
     private TaskResponse mapToResponse(Task task) {
@@ -108,6 +125,18 @@ public class TaskService {
                         new ResourceNotFoundException("Task not found")
                 );
 
+        User currentUser = getCurrentUser();
+
+        if (!task
+                .getProject()
+                .getWorkspace()
+                .getOwner()
+                .getId()
+                .equals(currentUser.getId())
+        ) {
+            throw new RuntimeException("Only the workspace owner can update tasks");
+        }
+
         task.setTitle(request.getTitle());
         task.setDescription(request.getDescription());
 
@@ -129,6 +158,18 @@ public class TaskService {
                         new ResourceNotFoundException("Task not found")
                 );
 
+        User currentUser = getCurrentUser();
+
+        if (!task
+                .getProject()
+                .getWorkspace()
+                .getOwner()
+                .getId()
+                .equals(currentUser.getId())
+        ) {
+            throw new RuntimeException("Only the workspace owner can update task status");
+        }
+
         task.setStatus(request.getStatus());
 
         taskRepository.save(task);
@@ -143,6 +184,19 @@ public class TaskService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Task not found")
                 );
+
+        User currentUser = getCurrentUser();
+
+        if (!task
+                .getProject()
+                .getWorkspace()
+                .getOwner()
+                .getId()
+                .equals(currentUser.getId())
+        ) {
+            throw new RuntimeException("Only the workspace owner can delete tasks");
+        }
+
         taskRepository.delete(task);
     }
 
