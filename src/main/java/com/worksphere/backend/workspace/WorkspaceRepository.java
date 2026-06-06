@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface WorkspaceRepository extends JpaRepository<Workspace, Long> {
     List<Workspace> findByOwner(User owner);
+    List<Workspace> findByMembersUser(User user);
 }

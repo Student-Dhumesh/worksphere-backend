@@ -1,13 +1,12 @@
 package com.worksphere.backend.auth;
 
-import com.worksphere.backend.auth.dto.AuthResponse;
-import com.worksphere.backend.auth.dto.LoginRequest;
-import com.worksphere.backend.auth.dto.RegisterRequest;
+import com.worksphere.backend.auth.dto.*;
 import com.worksphere.backend.exception.EmailAlreadyExistsException;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,7 +21,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-//    Helper Function - Build auth response
+//    Helper Function - Get current logged in user
+    private User getCurrentUser() {
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
+    }
+
+    //    Helper Function - Build auth response
     private AuthResponse buildAuthResponse(User user) {
 
         String accessToken = jwtService.generateAccessToken(user.getEmail());
@@ -111,4 +123,31 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+//    Update profile
+    public AuthResponse updateProfile(UpdateProfileRequest request) {
+
+        User currentUser = getCurrentUser();
+
+        currentUser.setName(request.getName());
+
+        userRepository.save(currentUser);
+
+        return buildAuthResponse(currentUser);
+    }
+
+//    Change password
+    public void changePassword(ChangePasswordRequest request) {
+
+        User currentUser = getCurrentUser();
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        userRepository.save(currentUser);
+    }
+
 }
+

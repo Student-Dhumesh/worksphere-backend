@@ -27,13 +27,29 @@ public class WorkspaceController {
     }
 
     @GetMapping
-    public ResponseEntity<List<WorkspaceResponse>> getMyWorkspaces() {
-        return ResponseEntity.ok(workspaceService.getMyWorkspaces());
+    public ResponseEntity<List<WorkspaceResponse>> getAllMyWorkspaces() {
+        return ResponseEntity.ok(
+                workspaceService.getAllMyWorkspaces()
+        );
     }
 
     @GetMapping("/{workspaceId}")
     public ResponseEntity<WorkspaceResponse> getWorkspace(@PathVariable Long workspaceId) {
         return ResponseEntity.ok(workspaceService.getWorkspace(workspaceId));
+    }
+
+    @GetMapping("/joined")
+    public ResponseEntity<List<WorkspaceResponse>> getJoinedWorkspaces() {
+        return ResponseEntity.ok(
+                workspaceService.getJoinedWorkspaces()
+        );
+    }
+
+    @PutMapping("/{workspaceId}")
+    public ResponseEntity<WorkspaceResponse> updateWorkspace(@PathVariable Long workspaceId, @Valid @RequestBody WorkspaceRequest request) {
+        return ResponseEntity.ok(
+                workspaceService.updateWorkspace(workspaceId, request)
+        );
     }
 
     @DeleteMapping("/{workspaceId}")
@@ -47,6 +63,13 @@ public class WorkspaceController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(workspaceService.addMember(workspaceId, request));
+    }
+
+    @PatchMapping("/{workspaceId}/members/{userId}")
+    public ResponseEntity<MemberResponse> updateMemberRole(@PathVariable Long workspaceId, @PathVariable Long userId, @Valid @RequestBody AddMemberRequest request) {
+        return ResponseEntity.ok(
+                workspaceService.updateMemberRole(workspaceId, userId, request)
+        );
     }
 
     @DeleteMapping("/{workspaceId}/members/{userId}")

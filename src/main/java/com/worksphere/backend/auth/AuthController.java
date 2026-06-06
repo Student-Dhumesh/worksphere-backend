@@ -1,8 +1,6 @@
 package com.worksphere.backend.auth;
 
-import com.worksphere.backend.auth.dto.AuthResponse;
-import com.worksphere.backend.auth.dto.LoginRequest;
-import com.worksphere.backend.auth.dto.RegisterRequest;
+import com.worksphere.backend.auth.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -39,6 +37,17 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UserDetails> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(userDetails);
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<AuthResponse> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        return ResponseEntity.ok(authService.updateProfile(request));
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(request);
+        return ResponseEntity.noContent().build();
     }
 
 }
