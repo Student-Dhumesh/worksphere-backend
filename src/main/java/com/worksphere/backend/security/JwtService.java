@@ -21,6 +21,9 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpiration;
+
     // Key
     private SecretKey getSignKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
@@ -28,13 +31,21 @@ public class JwtService {
     }
 
     // Generate
-    public String generateToken(String email) {
+    public String buildToken(String email, long expiry) {
         return Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .expiration(new Date(System.currentTimeMillis() + expiry))
                 .signWith(getSignKey())
                 .compact();
+    }
+
+    public  String generateAccessToken(String email) {
+        return buildToken(email, expiration);
+    }
+
+    public String generateRefreshToken(String email) {
+        return buildToken(email, refreshExpiration);
     }
 
     // Parse

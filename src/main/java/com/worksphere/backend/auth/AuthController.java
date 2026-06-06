@@ -30,6 +30,12 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@RequestHeader("Authorization") String authHeader) {
+        String refreshToken = authHeader.substring(7);
+        return ResponseEntity.ok(authService.refresh(refreshToken));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<UserDetails> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(userDetails);

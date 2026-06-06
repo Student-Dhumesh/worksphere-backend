@@ -4,10 +4,15 @@ import com.worksphere.backend.auth.dto.AuthResponse;
 import com.worksphere.backend.auth.dto.LoginRequest;
 import com.worksphere.backend.auth.dto.RegisterRequest;
 import com.worksphere.backend.exception.EmailAlreadyExistsException;
+import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,12 +22,15 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
+//    Helper Function - Build auth response
     private AuthResponse buildAuthResponse(User user) {
 
-        String token = jwtService.generateToken(user.getEmail());
+        String accessToken = jwtService.generateAccessToken(user.getEmail());
+        String refreshToken = jwtService.generateRefreshToken(user.getEmail());
 
         return AuthResponse.builder()
-                .token(token)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
                 .tokenType("Bearer")
                 .user(
                         AuthResponse.UserInfo.builder()
@@ -35,6 +43,7 @@ public class AuthService {
                 .build();
     }
 
+//    Register
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new EmailAlreadyExistsException("Email already in use");
@@ -53,6 +62,7 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+//    Login
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
@@ -67,6 +77,36 @@ public class AuthService {
         if (!user.isEnabled()) {
             throw new RuntimeException("Account is disabled");
         }
+
+        return buildAuthResponse(user);
+    }
+
+//    Refresh
+    public AuthResponse refresh(String refreshToken) {
+
+        String email = jwtService.extractEmail(refreshToken);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
+
+        UserDetails userDetails = org.springframework.security.core.userdetails.User
+                .builder()
+                .username(user.getEmail())
+                .password(user.getPassword())
+                .authorities(
+                        List.of(
+                                new SimpleGrantedAuthority(
+                                        "ROLE_" + user.getRole().name()
+                                )
+                        )
+                )
+                .build();
+
+        if (!jwtService.isTokenValid(refreshToken, userDetails)) {
+            throw new RuntimeException("Invalid expired refresh token");
+        };
 
         return buildAuthResponse(user);
     }
