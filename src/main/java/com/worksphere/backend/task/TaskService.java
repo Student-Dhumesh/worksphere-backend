@@ -1,5 +1,6 @@
 package com.worksphere.backend.task;
 
+import com.worksphere.backend.auth.Role;
 import com.worksphere.backend.auth.User;
 import com.worksphere.backend.auth.UserRepository;
 import com.worksphere.backend.exception.ResourceNotFoundException;
@@ -9,6 +10,9 @@ import com.worksphere.backend.task.dto.TaskRequest;
 import com.worksphere.backend.task.dto.TaskResponse;
 import com.worksphere.backend.task.dto.TaskStatusUpdateRequest;
 import com.worksphere.backend.task.dto.TaskUpdateRequest;
+import com.worksphere.backend.workspace.Workspace;
+import com.worksphere.backend.workspace.WorkspaceMember;
+import com.worksphere.backend.workspace.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
 //    Helper Function - Get current logged in user
     private User getCurrentUser() {
@@ -37,7 +42,39 @@ public class TaskService {
                 );
     }
 
-//    Helper Function - Map to response
+//    Helper Function - Get current user's membership in a workspace
+    private WorkspaceMember getMembership(Workspace workspace, User user) {
+        if (workspace
+                .getOwner()
+                .getId()
+                .equals(user.getId())
+        ) {
+            return null;
+        }
+
+        return workspaceMemberRepository
+                .findByWorkspaceAndUser(workspace, user)
+                .orElseThrow(() ->
+                        new RuntimeException("You are not a member of this workspace")
+                );
+    }
+
+//    Helper Function - Check if user is owner
+    private boolean isOwner(Workspace workspace, User user) {
+        return workspace.getOwner().getId().equals(user.getId());
+    }
+
+//    Helper Function - Check if user is owner or manager
+    private boolean isOwnerOrManager(Workspace workspace, User user) {
+        if (isOwner(workspace, user)) return true;
+
+        return workspaceMemberRepository
+                .findByWorkspaceAndUser(workspace, user)
+                .map(member -> member.getRole() == Role.MANAGER)
+                .orElse(false);
+    }
+
+    //    Helper Function - Map to response
     private TaskResponse mapToResponse(Task task) {
         return TaskResponse.builder()
                 .id(task.getId())
@@ -59,6 +96,11 @@ public class TaskService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Project not found")
                 );
+
+        User currentUser = getCurrentUser();
+        Workspace workspace = project.getWorkspace();
+
+        getMembership(workspace, currentUser);
 
         Task task = Task.builder()
                 .title(request.getTitle())
@@ -126,15 +168,10 @@ public class TaskService {
                 );
 
         User currentUser = getCurrentUser();
+        Workspace workspace = task.getProject().getWorkspace();
 
-        if (!task
-                .getProject()
-                .getWorkspace()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())
-        ) {
-            throw new RuntimeException("Only the workspace owner can update tasks");
+        if (!isOwnerOrManager(workspace, currentUser)) {
+            throw new RuntimeException("Only owner or manager can update tasks");
         }
 
         task.setTitle(request.getTitle());
@@ -159,16 +196,9 @@ public class TaskService {
                 );
 
         User currentUser = getCurrentUser();
+        Workspace workspace = task.getProject().getWorkspace();
 
-        if (!task
-                .getProject()
-                .getWorkspace()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())
-        ) {
-            throw new RuntimeException("Only the workspace owner can update task status");
-        }
+        getMembership(workspace, currentUser);
 
         task.setStatus(request.getStatus());
 
@@ -186,15 +216,10 @@ public class TaskService {
                 );
 
         User currentUser = getCurrentUser();
+        Workspace workspace = task.getProject().getWorkspace();
 
-        if (!task
-                .getProject()
-                .getWorkspace()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())
-        ) {
-            throw new RuntimeException("Only the workspace owner can delete tasks");
+        if (!isOwnerOrManager(workspace, currentUser)) {
+            throw new RuntimeException("Only owner or manager can delete tasks");
         }
 
         taskRepository.delete(task);

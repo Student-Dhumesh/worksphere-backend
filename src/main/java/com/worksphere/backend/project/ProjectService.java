@@ -1,11 +1,13 @@
 package com.worksphere.backend.project;
 
+import com.worksphere.backend.auth.Role;
 import com.worksphere.backend.auth.User;
 import com.worksphere.backend.auth.UserRepository;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.project.dto.ProjectRequest;
 import com.worksphere.backend.project.dto.ProjectResponse;
 import com.worksphere.backend.workspace.Workspace;
+import com.worksphere.backend.workspace.WorkspaceMemberRepository;
 import com.worksphere.backend.workspace.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,6 +22,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final WorkspaceRepository workspaceRepository;
     private final UserRepository userRepository;
+    private final WorkspaceMemberRepository workspaceMemberRepository;
 
 //    Helper Function - Get current logged in user
     private User getCurrentUser() {
@@ -32,6 +35,21 @@ public class ProjectService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException(("User not found"))
                 );
+    }
+
+//    Helper Function - Check if user is owner
+    private boolean isOwner(Workspace workspace, User user) {
+        return workspace.getOwner().getId().equals(user.getId());
+    }
+
+//    Helper Function - Check if user is owner or manager
+    private boolean isOwnerOrManager(Workspace workspace, User user) {
+        if (isOwner(workspace, user)) return true;
+
+        return workspaceMemberRepository
+                .findByWorkspaceAndUser(workspace, user)
+                .map(member -> member.getRole() == Role.MANAGER)
+                .orElse(false);
     }
 
 //    Helper Function - Map to response
@@ -53,6 +71,12 @@ public class ProjectService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Workspace not found")
                 );
+
+        User currentUser = getCurrentUser();
+
+        if (!isOwnerOrManager(workspace, currentUser)) {
+            throw new RuntimeException("Only owner or manager can create projects");
+        }
 
         Project project = Project.builder()
                 .name(request.getName())
@@ -100,14 +124,10 @@ public class ProjectService {
                 );
 
         User currentUser = getCurrentUser();
+        Workspace workspace = project.getWorkspace();
 
-        if (!project
-                .getWorkspace()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())
-        ) {
-            throw new RuntimeException("Only the workspace owner can update projects");
+        if (!isOwnerOrManager(workspace, currentUser)) {
+            throw new RuntimeException("Only owner or manager can update projects");
         }
 
         project.setName(request.getName());
@@ -126,14 +146,10 @@ public class ProjectService {
                 );
 
         User currentUser = getCurrentUser();
+        Workspace workspace = project.getWorkspace();
 
-        if (!project
-                .getWorkspace()
-                .getOwner()
-                .getId()
-                .equals(currentUser.getId())
-        ) {
-            throw new RuntimeException("Only the workspace owner can delete projects");
+        if (!isOwnerOrManager(workspace, currentUser)) {
+            throw new RuntimeException("Only the owner can delete projects");
         }
 
         projectRepository.delete(project);
