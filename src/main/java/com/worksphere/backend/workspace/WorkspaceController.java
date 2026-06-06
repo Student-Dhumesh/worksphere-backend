@@ -4,6 +4,7 @@ import com.worksphere.backend.workspace.dto.AddMemberRequest;
 import com.worksphere.backend.workspace.dto.MemberResponse;
 import com.worksphere.backend.workspace.dto.WorkspaceRequest;
 import com.worksphere.backend.workspace.dto.WorkspaceResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/workspaces")
+@Tag(name = "Workspace", description = "Workspace management")
 @RequiredArgsConstructor
 public class WorkspaceController {
 

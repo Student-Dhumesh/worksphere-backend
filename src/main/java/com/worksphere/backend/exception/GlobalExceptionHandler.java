@@ -11,42 +11,42 @@ import java.util.Map;
 
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<Map<String, String>> handleEmailExists(EmailAlreadyExistsException exception) {
+//    Helper Function
+    private ResponseEntity<Map<String, String>> build(HttpStatus status, String code, String message) {
         return ResponseEntity
-                .status(HttpStatus.CONFLICT)
+                .status(status)
                 .body(
                         Map.of(
-                                "code", "EMAIL_EXISTS",
-                                "message", exception.getMessage()
+                                "code", code,
+                                "message", message
                         )
                 );
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleEmailExists(EmailAlreadyExistsException exception) {
+        return build(HttpStatus.CONFLICT, "EMAIL_EXISTS", exception.getMessage());
+    }
+
+    @ExceptionHandler(AlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleAlreadyExists(AlreadyExistsException exception) {
+        return build(HttpStatus.CONFLICT, "ALREADY_EXISTS", exception.getMessage());
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleNotFound(ResourceNotFoundException exception) {
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(
-                        Map.of(
-                                "code", "NOT_FOUND",
-                                "message", exception.getMessage()
-                        )
-                );
+        return build(HttpStatus.NOT_FOUND, "NOT_FOUND", exception.getMessage());
     }
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException exception) {
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(
-                        Map.of(
-                                "code", "BAD_REQUEST",
-                                "message", exception.getMessage()
-                        )
-                );
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException exception) {
+        return build(HttpStatus.FORBIDDEN, "ACCESS_DENIED", exception.getMessage());
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, String>> handleUnauthorized(UnauthorizedException exception) {
+        return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", exception.getMessage());
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException exception) {
@@ -59,6 +59,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(errors);
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException exception) {
+        return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", exception.getMessage());
     }
 
 }

@@ -1,6 +1,7 @@
 package com.worksphere.backend.auth;
 
 import com.worksphere.backend.auth.dto.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Auth", description = "Authentication endpoints")
 @RequiredArgsConstructor
 public class AuthController {
 

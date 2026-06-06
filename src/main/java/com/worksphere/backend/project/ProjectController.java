@@ -2,6 +2,7 @@ package com.worksphere.backend.project;
 
 import com.worksphere.backend.project.dto.ProjectRequest;
 import com.worksphere.backend.project.dto.ProjectResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/projects")
+@Tag(name = "Project", description = "Project management")
 @RequiredArgsConstructor
 public class ProjectController {
 

@@ -5,6 +5,7 @@ import com.worksphere.backend.auth.UserRepository;
 import com.worksphere.backend.comment.dto.CommentRequest;
 import com.worksphere.backend.comment.dto.CommentResponse;
 import com.worksphere.backend.comment.dto.CommentUpdateRequest;
+import com.worksphere.backend.exception.AccessDeniedException;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.task.Task;
 import com.worksphere.backend.task.TaskRepository;
@@ -98,7 +99,7 @@ public class CommentService {
         User currentUser = getCurrentUser();
 
         if (!comment.getAuthor().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("You can only update your own comments");
+            throw new AccessDeniedException("You can only update your own comments");
         }
 
         comment.setContent(request.getContent());
@@ -108,7 +109,7 @@ public class CommentService {
     }
 
 //    Delete comment
-    public void deleteComment(Long commentId) {
+    public void deleteComment(Long commentId) throws RuntimeException {
 
         Comment comment = commentRepository
                 .findById(commentId)
@@ -123,7 +124,7 @@ public class CommentService {
                 .getId()
                 .equals(currentUser.getId())
         ) {
-            throw new RuntimeException("You can only delete your own comments");
+            throw new AccessDeniedException("You can only delete your own comments");
         }
 
         commentRepository.delete(comment);

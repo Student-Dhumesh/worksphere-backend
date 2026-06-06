@@ -2,6 +2,8 @@ package com.worksphere.backend.workspace;
 
 import com.worksphere.backend.auth.User;
 import com.worksphere.backend.auth.UserRepository;
+import com.worksphere.backend.exception.AccessDeniedException;
+import com.worksphere.backend.exception.AlreadyExistsException;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.workspace.dto.AddMemberRequest;
 import com.worksphere.backend.workspace.dto.MemberResponse;
@@ -139,7 +141,7 @@ public class WorkspaceService {
         User currentUser = getCurrentUser();
 
         if (!isOwner(workspace, currentUser)) {
-            throw new RuntimeException("Only the owner can update this workspace");
+            throw new AccessDeniedException("Only the owner can update this workspace");
         }
 
         workspace.setName(request.getName());
@@ -162,7 +164,7 @@ public class WorkspaceService {
         User currentUser = getCurrentUser();
 
         if(!isOwner(workspace, currentUser)) {
-            throw new RuntimeException("Only the owner can update member roles");
+            throw new AccessDeniedException("Only the owner can update member roles");
         }
 
         User userToUpdate = userRepository
@@ -200,7 +202,7 @@ public class WorkspaceService {
         User currentUser = getCurrentUser();
 
         if (!workspace.getOwner().getId().equals(currentUser.getId())) {
-            throw new RuntimeException(
+            throw new AccessDeniedException(
                     "Only the owner can delete this workspace"
             );
         }
@@ -224,7 +226,7 @@ public class WorkspaceService {
                 );
 
         if (workspaceMemberRepository.existsByWorkspaceAndUser(workspace, userToAdd)) {
-            throw new RuntimeException("User is already a member");
+            throw new AlreadyExistsException("User is already a member");
         }
 
         WorkspaceMember member = WorkspaceMember.builder()
@@ -255,7 +257,7 @@ public class WorkspaceService {
         User currentUser = getCurrentUser();
 
         if (!workspace.getOwner().getId().equals(currentUser.getId())) {
-            throw new RuntimeException("Only the owner can remove members");
+            throw new AccessDeniedException("Only the owner can remove members");
         }
 
         User userToRemove = userRepository

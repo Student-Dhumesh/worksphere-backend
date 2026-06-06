@@ -3,6 +3,7 @@ package com.worksphere.backend.project;
 import com.worksphere.backend.auth.Role;
 import com.worksphere.backend.auth.User;
 import com.worksphere.backend.auth.UserRepository;
+import com.worksphere.backend.exception.AccessDeniedException;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.project.dto.ProjectRequest;
 import com.worksphere.backend.project.dto.ProjectResponse;
@@ -93,7 +94,7 @@ public class ProjectService {
         User currentUser = getCurrentUser();
 
         if (!isOwnerOrManager(workspace, currentUser)) {
-            throw new RuntimeException("Only owner or manager can create projects");
+            throw new AccessDeniedException("Only owner or manager can create projects");
         }
 
         Project project = Project.builder()
@@ -149,7 +150,7 @@ public class ProjectService {
         Workspace workspace = project.getWorkspace();
 
         if (!isOwnerOrManager(workspace, currentUser)) {
-            throw new RuntimeException("Only owner or manager can update projects");
+            throw new AccessDeniedException("Only owner or manager can update projects");
         }
 
         project.setName(request.getName());
@@ -171,7 +172,7 @@ public class ProjectService {
         Workspace workspace = project.getWorkspace();
 
         if (!isOwnerOrManager(workspace, currentUser)) {
-            throw new RuntimeException("Only the owner can delete projects");
+            throw new AccessDeniedException("Only the owner can delete projects");
         }
 
         projectRepository.delete(project);

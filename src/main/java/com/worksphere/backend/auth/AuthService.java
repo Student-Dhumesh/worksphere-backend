@@ -3,6 +3,7 @@ package com.worksphere.backend.auth;
 import com.worksphere.backend.auth.dto.*;
 import com.worksphere.backend.exception.EmailAlreadyExistsException;
 import com.worksphere.backend.exception.ResourceNotFoundException;
+import com.worksphere.backend.exception.UnauthorizedException;
 import com.worksphere.backend.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -79,15 +80,15 @@ public class AuthService {
 
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() ->
-                        new RuntimeException("Invalid credentials")
+                        new UnauthorizedException("Invalid credentials")
                 );
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new UnauthorizedException("Invalid credentials");
         }
 
         if (!user.isEnabled()) {
-            throw new RuntimeException("Account is disabled");
+            throw new UnauthorizedException("Account is disabled");
         }
 
         return buildAuthResponse(user);
@@ -117,7 +118,7 @@ public class AuthService {
                 .build();
 
         if (!jwtService.isTokenValid(refreshToken, userDetails)) {
-            throw new RuntimeException("Invalid expired refresh token");
+            throw new UnauthorizedException("Invalid expired refresh token");
         };
 
         return buildAuthResponse(user);
@@ -141,7 +142,7 @@ public class AuthService {
         User currentUser = getCurrentUser();
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), currentUser.getPassword())) {
-            throw new RuntimeException("Current password is incorrect");
+            throw new UnauthorizedException("Current password is incorrect");
         }
 
         currentUser.setPassword(passwordEncoder.encode(request.getNewPassword()));

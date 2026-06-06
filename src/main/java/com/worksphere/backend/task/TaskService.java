@@ -3,6 +3,7 @@ package com.worksphere.backend.task;
 import com.worksphere.backend.auth.Role;
 import com.worksphere.backend.auth.User;
 import com.worksphere.backend.auth.UserRepository;
+import com.worksphere.backend.exception.AccessDeniedException;
 import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.project.Project;
 import com.worksphere.backend.project.ProjectRepository;
@@ -55,7 +56,7 @@ public class TaskService {
         return workspaceMemberRepository
                 .findByWorkspaceAndUser(workspace, user)
                 .orElseThrow(() ->
-                        new RuntimeException("You are not a member of this workspace")
+                        new AccessDeniedException("You are not a member of this workspace")
                 );
     }
 
@@ -171,7 +172,7 @@ public class TaskService {
         Workspace workspace = task.getProject().getWorkspace();
 
         if (!isOwnerOrManager(workspace, currentUser)) {
-            throw new RuntimeException("Only owner or manager can update tasks");
+            throw new AccessDeniedException("Only owner or manager can update tasks");
         }
 
         task.setTitle(request.getTitle());
@@ -219,7 +220,7 @@ public class TaskService {
         Workspace workspace = task.getProject().getWorkspace();
 
         if (!isOwnerOrManager(workspace, currentUser)) {
-            throw new RuntimeException("Only owner or manager can delete tasks");
+            throw new AccessDeniedException("Only owner or manager can delete tasks");
         }
 
         taskRepository.delete(task);

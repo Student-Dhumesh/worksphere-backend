@@ -3,6 +3,7 @@ package com.worksphere.backend.comment;
 import com.worksphere.backend.comment.dto.CommentRequest;
 import com.worksphere.backend.comment.dto.CommentResponse;
 import com.worksphere.backend.comment.dto.CommentUpdateRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/comments")
+@Tag(name = "Comment", description = "Comment management")
 @RequiredArgsConstructor
 public class CommentController {
 

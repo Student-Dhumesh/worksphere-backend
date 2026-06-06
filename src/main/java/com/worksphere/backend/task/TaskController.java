@@ -4,6 +4,7 @@ import com.worksphere.backend.task.dto.TaskRequest;
 import com.worksphere.backend.task.dto.TaskResponse;
 import com.worksphere.backend.task.dto.TaskStatusUpdateRequest;
 import com.worksphere.backend.task.dto.TaskUpdateRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
+@Tag(name = "Task", description = "Task management")
 @RequiredArgsConstructor
 public class TaskController {
 
