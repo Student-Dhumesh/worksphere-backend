@@ -1,5 +1,6 @@
 package com.worksphere.backend.exception;
 
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -51,15 +52,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException exception) {
-        Map<String, String> errors = new HashMap<>();
-        exception.getBindingResult()
+        String message = exception.getBindingResult()
                 .getFieldErrors()
-                .forEach(err ->
-                        errors.put(err.getField(), err.getDefaultMessage())
-                );
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(errors);
+                .stream()
+                .findFirst()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .orElse("Validation failed");
+        return build(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", message);
     }
 
     @ExceptionHandler(RuntimeException.class)
