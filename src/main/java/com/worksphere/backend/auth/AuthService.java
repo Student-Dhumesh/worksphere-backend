@@ -124,6 +124,20 @@ public class AuthService {
         return buildAuthResponse(user);
     }
 
+//    User details
+    public AuthResponse.UserInfo getMe(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("User not found")
+                );
+        return AuthResponse.UserInfo.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
+    }
+
 //    Update profile
     public AuthResponse updateProfile(UpdateProfileRequest request) {
 
