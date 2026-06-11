@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -36,6 +37,7 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**",
@@ -46,14 +48,22 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(
-                                (req, res, e) -> res.sendError(
-                                        HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized"
-                                )
+                                (req, res, e) -> {
+                                    res.setContentType("application/json");
+                                    res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    res.getWriter().write(
+                                            "{\"code\":\"UNAUTHORIZED\",\"message\":\"Unauthorized\"}"
+                                    );
+                                }
                         )
                         .accessDeniedHandler(
-                                (req, res, e) -> res.sendError(
-                                        HttpServletResponse.SC_FORBIDDEN, "Forbidden"
-                                )
+                                (req, res, e) -> {
+                                    res.setContentType("application/json");
+                                    res.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                                    res.getWriter().write(
+                                            "{\"code\":\"FORBIDDEN\",\"message\":\"Forbidden\"}"
+                                    );
+                                }
                         )
                 )
                 .authenticationProvider(authenticationProvider())
