@@ -5,10 +5,7 @@ import com.worksphere.backend.auth.UserRepository;
 import com.worksphere.backend.exception.AccessDeniedException;
 import com.worksphere.backend.exception.AlreadyExistsException;
 import com.worksphere.backend.exception.ResourceNotFoundException;
-import com.worksphere.backend.workspace.dto.AddMemberRequest;
-import com.worksphere.backend.workspace.dto.MemberResponse;
-import com.worksphere.backend.workspace.dto.WorkspaceRequest;
-import com.worksphere.backend.workspace.dto.WorkspaceResponse;
+import com.worksphere.backend.workspace.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -153,7 +150,7 @@ public class WorkspaceService {
     }
 
 //    Update role
-    public MemberResponse updateMemberRole(Long workspaceId, Long userId, AddMemberRequest request) {
+    public MemberResponse updateMemberRole(Long workspaceId, Long userId, UpdateMemberRoleRequest request) {
 
         Workspace workspace = workspaceRepository
                 .findById(workspaceId)

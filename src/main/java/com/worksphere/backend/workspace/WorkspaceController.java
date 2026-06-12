@@ -1,9 +1,6 @@
 package com.worksphere.backend.workspace;
 
-import com.worksphere.backend.workspace.dto.AddMemberRequest;
-import com.worksphere.backend.workspace.dto.MemberResponse;
-import com.worksphere.backend.workspace.dto.WorkspaceRequest;
-import com.worksphere.backend.workspace.dto.WorkspaceResponse;
+import com.worksphere.backend.workspace.dto.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +65,7 @@ public class WorkspaceController {
     }
 
     @PatchMapping("/{workspaceId}/members/{userId}")
-    public ResponseEntity<MemberResponse> updateMemberRole(@PathVariable Long workspaceId, @PathVariable Long userId, @Valid @RequestBody AddMemberRequest request) {
+    public ResponseEntity<MemberResponse> updateMemberRole(@PathVariable Long workspaceId, @PathVariable Long userId, @Valid @RequestBody UpdateMemberRoleRequest request) {
         return ResponseEntity.ok(
                 workspaceService.updateMemberRole(workspaceId, userId, request)
         );
