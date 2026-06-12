@@ -1,6 +1,7 @@
 package com.worksphere.backend.workspace;
 
 import com.worksphere.backend.auth.User;
+import com.worksphere.backend.project.Project;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,4 +33,8 @@ public class Workspace {
     @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<WorkspaceMember> members = new ArrayList<>();
+
+    @OneToMany(mappedBy = "workspace", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Project> projects = new ArrayList<>();
 }

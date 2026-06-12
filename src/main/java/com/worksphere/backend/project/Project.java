@@ -1,8 +1,12 @@
 package com.worksphere.backend.project;
 
+import com.worksphere.backend.task.Task;
 import com.worksphere.backend.workspace.Workspace;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "projects")
@@ -25,4 +29,10 @@ public class Project {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "workspace_id", nullable = false)
     private Workspace workspace;
+
+    @OneToMany(mappedBy = "project",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true)
+    @Builder.Default
+    private List<Task> tasks = new ArrayList<>();
 }
