@@ -1,5 +1,6 @@
 package com.worksphere.backend.task;
 
+import com.worksphere.backend.auth.User;
 import com.worksphere.backend.comment.Comment;
 import com.worksphere.backend.project.Project;
 import jakarta.persistence.*;
@@ -47,4 +48,8 @@ public class Task {
             orphanRemoval = true)
     @Builder.Default
     private List<Comment> comments = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "created_by_id")
+    private User createdBy;
 }

@@ -19,4 +19,5 @@ public class TaskResponse {
     private LocalDateTime createdAt;
     private Long projectId;
     private String projectName;
+    private String createdByEmail;
 }

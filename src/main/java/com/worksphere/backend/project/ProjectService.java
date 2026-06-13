@@ -8,7 +8,6 @@ import com.worksphere.backend.exception.ResourceNotFoundException;
 import com.worksphere.backend.project.dto.ProjectRequest;
 import com.worksphere.backend.project.dto.ProjectResponse;
 import com.worksphere.backend.workspace.Workspace;
-import com.worksphere.backend.workspace.WorkspaceMember;
 import com.worksphere.backend.workspace.WorkspaceMemberRepository;
 import com.worksphere.backend.workspace.WorkspaceRepository;
 import lombok.RequiredArgsConstructor;
@@ -39,26 +38,21 @@ public class ProjectService {
                 );
     }
 
-//    Helper Function - Get current user's membership in a workspace
-    private WorkspaceMember getMembership(Workspace workspace, User user) {
-        if (workspace
-                .getOwner()
-                .getId()
-                .equals(user.getId())
-        ) {
-            return null;
-        }
-
-        return workspaceMemberRepository
-                .findByWorkspaceAndUser(workspace, user)
-                .orElseThrow(() ->
-                        new RuntimeException("You are not a member of this workspace")
-                );
-    }
-
-    //    Helper Function - Check if user is owner
+//    Helper Function - Check if user is owner
     private boolean isOwner(Workspace workspace, User user) {
         return workspace.getOwner().getId().equals(user.getId());
+    }
+
+
+//    Helper Function - Get current user's membership in a workspace
+    private void getMembership(Workspace workspace, User user) {
+        if (isOwner(workspace, user)) return;
+
+        workspaceMemberRepository
+                .findByWorkspaceAndUser(workspace, user)
+                .orElseThrow(() ->
+                        new AccessDeniedException("You are not a member of this workspace")
+                );
     }
 
 //    Helper Function - Check if user is owner or manager

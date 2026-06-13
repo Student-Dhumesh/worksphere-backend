@@ -12,7 +12,6 @@ import com.worksphere.backend.task.dto.TaskResponse;
 import com.worksphere.backend.task.dto.TaskStatusUpdateRequest;
 import com.worksphere.backend.task.dto.TaskUpdateRequest;
 import com.worksphere.backend.workspace.Workspace;
-import com.worksphere.backend.workspace.WorkspaceMember;
 import com.worksphere.backend.workspace.WorkspaceMemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -43,26 +42,20 @@ public class TaskService {
                 );
     }
 
-//    Helper Function - Get current user's membership in a workspace
-    private WorkspaceMember getMembership(Workspace workspace, User user) {
-        if (workspace
-                .getOwner()
-                .getId()
-                .equals(user.getId())
-        ) {
-            return null;
-        }
+//    Helper Function - Check if user is owner
+    private boolean isOwner(Workspace workspace, User user) {
+        return workspace.getOwner().getId().equals(user.getId());
+    }
 
-        return workspaceMemberRepository
+//    Helper Function - Get current user's membership in a workspace
+    private void checkMembership(Workspace workspace, User user) {
+        if (isOwner(workspace, user)) return;
+
+        workspaceMemberRepository
                 .findByWorkspaceAndUser(workspace, user)
                 .orElseThrow(() ->
                         new AccessDeniedException("You are not a member of this workspace")
                 );
-    }
-
-//    Helper Function - Check if user is owner
-    private boolean isOwner(Workspace workspace, User user) {
-        return workspace.getOwner().getId().equals(user.getId());
     }
 
 //    Helper Function - Check if user is owner or manager
@@ -75,7 +68,18 @@ public class TaskService {
                 .orElse(false);
     }
 
-    //    Helper Function - Map to response
+// Helper Function - Check if user is task creator
+    private boolean isTaskCreator(Task task, User user) {
+        if (task.getCreatedBy() == null) return false;
+        return task.getCreatedBy().getId().equals(user.getId());
+    }
+
+// Helper Function - Check if user can fully control task
+    private boolean hasFullControl(Task task, Workspace workspace, User user) {
+        return isOwnerOrManager(workspace, user) || isTaskCreator(task, user);
+    }
+
+//    Helper Function - Map to response
     private TaskResponse mapToResponse(Task task) {
         return TaskResponse.builder()
                 .id(task.getId())
@@ -86,6 +90,7 @@ public class TaskService {
                 .createdAt(task.getCreatedAt())
                 .projectId(task.getProject().getId())
                 .projectName(task.getProject().getName())
+                .createdByEmail(task.getCreatedBy() != null ? task.getCreatedBy().getEmail() : null)
                 .build();
     }
 
@@ -101,7 +106,7 @@ public class TaskService {
         User currentUser = getCurrentUser();
         Workspace workspace = project.getWorkspace();
 
-        getMembership(workspace, currentUser);
+        checkMembership(workspace, currentUser);
 
         Task task = Task.builder()
                 .title(request.getTitle())
@@ -110,6 +115,7 @@ public class TaskService {
                 .priority(request.getPriority() != null ? request.getPriority() : TaskPriority.MEDIUM)
                 .createdAt(LocalDateTime.now())
                 .project(project)
+                .createdBy(currentUser)
                 .build();
 
         taskRepository.save(task);
@@ -171,8 +177,8 @@ public class TaskService {
         User currentUser = getCurrentUser();
         Workspace workspace = task.getProject().getWorkspace();
 
-        if (!isOwnerOrManager(workspace, currentUser)) {
-            throw new AccessDeniedException("Only owner or manager can update tasks");
+        if (!hasFullControl(task, workspace, currentUser)) {
+            throw new AccessDeniedException("You don't have permission to update this task");
         }
 
         task.setTitle(request.getTitle());
@@ -199,7 +205,7 @@ public class TaskService {
         User currentUser = getCurrentUser();
         Workspace workspace = task.getProject().getWorkspace();
 
-        getMembership(workspace, currentUser);
+        checkMembership(workspace, currentUser);
 
         task.setStatus(request.getStatus());
 
@@ -219,8 +225,8 @@ public class TaskService {
         User currentUser = getCurrentUser();
         Workspace workspace = task.getProject().getWorkspace();
 
-        if (!isOwnerOrManager(workspace, currentUser)) {
-            throw new AccessDeniedException("Only owner or manager can delete tasks");
+        if (!hasFullControl(task, workspace, currentUser)) {
+            throw new AccessDeniedException("You don't have permission to delete this task");
         }
 
         taskRepository.delete(task);
